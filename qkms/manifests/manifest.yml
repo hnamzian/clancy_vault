@@ -4,6 +4,6 @@
   name: keystore
   specs:
     mountPoint: quorum
-    address: http://clancy_vault_1:8200
-    token: s.yEdYmulafPscqndVnmNpsDSQ
+    address: http://vault:8200
+    tokenPath: /vault/token/.root
     namespace: demo
