@@ -1,0 +1,9 @@
+# Hashicorp secret store manifest
+- kind: HashicorpKeys
+  version: 0.0.1
+  name: keystore
+  specs:
+    mountPoint: quorum
+    address: http://clancy_vault_1:8200
+    token: s.yEdYmulafPscqndVnmNpsDSQ
+    namespace: demo
