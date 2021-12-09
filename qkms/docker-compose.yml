@@ -1,0 +1,91 @@
+version: "3.7"
+
+x-default-variables: &default-variables
+  LOG_LEVEL: ${LOG_LEVEL-INFO}
+  LOG_FORMAT: ${LOG_FORMAT-text}
+  HTTP_PORT: ${HTTP_PORT-8080}
+  HTTP_HOST: ${HTTP_HOST-0.0.0.0}
+  HEALTH_PORT: ${HEALTH_PORT-8081}
+  DB_TLS_SSLMODE: ${DB_TLS_SSLMODE-disable}
+  DB_TLS_CERT: ${DB_TLS_CERT-}
+  DB_TLS_KEY: ${DB_TLS_KEY-}
+  DB_TLS_CA: ${DB_TLS_CA-}
+  DB_HOST: ${DB_HOST-postgres}
+  DB_PORT: ${DB_PORT-5432}
+  DB_DATABASE: ${DB_DATABASE-}
+  DB_POOLSIZE: ${DB_POOLSIZE-}
+  DB_POOL_TIMEOUT: ${DB_POOL_TIMEOUT-}
+  AUTH_OIDC_ISSUER_URL: ${AUTH_OIDC_ISSUER_URL-}
+  AUTH_OIDC_AUDIENCE: ${AUTH_OIDC_AUDIENCE-}
+  HTTPS_ENABLED: ${HTTPS_ENABLED-}
+  HTTPS_SERVER_KEY: ${HTTPS_SERVER_KEY-}
+  HTTPS_SERVER_CERT: ${HTTPS_SERVER_CERT-}
+  AUTH_TLS_CA: ${AUTH_TLS_CA-}
+  AUTH_API_KEY_FILE: ${AUTH_API_KEY_FILE-}
+
+x-container-common: &container-common
+  image: consensys/quorum-key-manager:latest
+  restart: ${CONTAINER_RESTART-on-failure}
+  tty: true
+  networks:
+    - hashicorp
+
+x-postgres-common: &postgres-common
+  environment:
+    POSTGRES_PASSWORD: postgres
+  restart: ${CONTAINER_RESTART-on-failure}
+  tty: true
+  networks:
+    - hashicorp
+
+x-qkm-common: &qkm-common
+  DB_HOST: postgres
+
+services:
+  postgres:
+    <<: *postgres-common
+    image: postgres:13.4-alpine
+    volumes:
+      - db-data-api:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 1s
+      timeout: 1s
+      retries: 5
+    restart: "on-failure"
+
+  migration:
+    <<: *container-common
+    image: consensys/quorum-key-manager:latest
+    environment:
+      <<: *default-variables
+      # <<: *qkm-common
+    command: migrate up
+    depends_on:
+      - postgres
+
+  key-manager:
+    <<: *container-common
+    image: consensys/quorum-key-manager:latest
+    environment:
+      <<: *default-variables
+      MANIFEST_PATH: ${MANIFEST_PATH-/manifests}
+    ports:
+      - 8080:8080
+      - 8081:8081
+    depends_on:
+      - migration
+    command: run
+    volumes:
+      - ${HOST_MANIFEST_PATH-./manifests}:/manifests:ro
+
+volumes:
+  db-data-api:
+    driver: local
+
+networks:
+  hashicorp:
+    external:
+      name: clancy_vault
