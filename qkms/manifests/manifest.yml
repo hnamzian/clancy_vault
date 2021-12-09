@@ -1,9 +1,28 @@
-# Hashicorp secret store manifest
+- kind: HashicorpSecrets
+  version: 0.0.1
+  name: hashicorp-secrets
+  specs:
+    mountPoint: secret
+    address: http://vault:8200
+    tokenPath: /vault/token/.root
+    namespace: clancy
+
 - kind: HashicorpKeys
   version: 0.0.1
-  name: keystore
+  name: hashicorp-keys
   specs:
     mountPoint: quorum
     address: http://vault:8200
     tokenPath: /vault/token/.root
-    namespace: demo
+    namespace: clancy
+
+- kind: Ethereum
+  version: 0.0.1
+  name: eth-accounts
+  specs:
+    keystore: HashicorpKeys
+    specs:
+      mountPoint: quorum
+      address: http://vault:8200
+      tokenPath: /vault/token/.root
+      namespace: clancy
