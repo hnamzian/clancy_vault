@@ -2,3 +2,4 @@ vault/data
 vault/logs
 vault/policies
 vault/token
+vault/unseal
