@@ -5,9 +5,9 @@ VAULT_ADDR=${VAULT_ADDR-localhost:8200}
 PLUGIN_PATH=${PLUGIN_PATH-/vault/plugins}
 PLUGIN_MOUNT_PATH=${PLUGIN_MOUNT_PATH-quorum}
 ROOT_TOKEN_PATH=${ROOT_TOKEN_PATH-./vault/token}
-ROOT_TOKEN_FILE_NAME=${ROOT_TOKEN_FILE_NAME-.root}
+ROOT_TOKEN_FILE_NAME=${ROOT_TOKEN_FILE_NAME-root}
 UNSEAL_KEYS_PATH=${UNSEAL_KEYS_PATH-./vault/unseal}
-UNSEAL_KEYS_FILE_NAME=${UNSEAL_KEYS_FILE_NAME-.unseal_keys}
+UNSEAL_KEYS_FILE_NAME=${UNSEAL_KEYS_FILE_NAME-unseal_keys}
 PLUGIN_FILE=./vault/plugins/quorum-hashicorp-vault-plugin
 
 echo "[PLUGIN] Initializing Vault: ${VAULT_ADDR}"
@@ -67,7 +67,7 @@ curl -s --header "X-Vault-Token: ${ROOT_TOKEN}" --request POST \
 if [ -n "$ROOT_TOKEN" ]; then 
   echo "[PLUGIN] Root token saved in ${ROOT_TOKEN_PATH}"
   mkdir -p ${ROOT_TOKEN_PATH}
-  echo "$ROOT_TOKEN" > ${ROOT_TOKEN_PATH}//${ROOT_TOKEN_FILE_NAME}
+  echo "$ROOT_TOKEN" > ${ROOT_TOKEN_PATH}/${ROOT_TOKEN_FILE_NAME}
 fi
 
 exit 0
