@@ -4,7 +4,7 @@
 VAULT_ADDR=${VAULT_ADDR-localhost:8200}
 PLUGIN_PATH=${PLUGIN_PATH-/vault/plugins}
 PLUGIN_MOUNT_PATH=${PLUGIN_MOUNT_PATH-quorum}
-ROOT_TOKEN_PATH=${ROOT_TOKEN_PATH-/vault/.root}
+ROOT_TOKEN_PATH=${ROOT_TOKEN_PATH-./vault/token/.root}
 PLUGIN_FILE=./vault/plugins/quorum-hashicorp-vault-plugin
 
 echo "[PLUGIN] Initializing Vault: ${VAULT_ADDR}"
@@ -15,6 +15,9 @@ ROOT_TOKEN=$(cat response.json | jq .root_token | tr -d '"')
 UNSEAL_KEY=$(cat response.json | jq .keys | jq '.[0]')
 ERRORS=$(cat response.json | jq .errors | jq '.[0]')
 rm response.json
+
+echo $ROOT_TOKEN
+echo $UNSEAL_KEY
 
 if [ "$UNSEAL_KEY" = "null" ]; then
   echo "[PLUGIN] cannot retrieve unseal key: $ERRORS"
