@@ -1,0 +1,112 @@
+version: "3.7"
+
+x-container-common: &container-common
+  networks:
+    - vault
+
+services:
+  vault:
+    <<: *container-common
+    image: consensys/quorum-hashicorp-vault-plugin:latest
+    tty: true
+    restart: "no"
+    cap_add:
+      - IPC_LOCK
+    environment:
+      ROOT_TOKEN_PATH: /vault/.root
+      VAULT_ADDR: http://vault:8200
+      PLUGIN_MOUNT_PATH: quorum
+    entrypoint:
+      - sh
+      - -c
+      - |
+        cat <<EOF > /vault/config.hcl
+            backend "file" {
+              path = "/vault/file"
+            }
+
+            listener "tcp" {
+              address = "vault:8200"
+              tls_disable = true
+            }
+
+            default_lease_ttl = "15m"
+            max_lease_ttl = "30m"
+            api_addr = "http://vault:8200"
+            plugin_directory = "/vault/plugins"
+            log_level = "Debug"
+
+            ui = false
+        EOF
+
+        ( sleep 2 ; vault-init.sh ) &
+        vault server -config=/vault/config.hcl
+    ports:
+      - 8200:8200
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "--proxy", "off", "http://localhost:8200/v1/sys/health?standbyok=true" ]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+networks:
+  vault:
+    driver: bridge
+
+
+
+
+# version: "3.7"
+
+# x-container-common: &container-common
+#   restart: always
+#   networks:
+#     - vault
+
+# services:
+#   consul:
+#     <<: *container-common
+#     image: consul:1.10.4
+#     container_name: consul
+#     volumes:
+#       - ./consul/config/consul.json:/consul/config/consul.json:ro
+#     ports:
+#       - 8500:8500
+#     command: 'agent -config-file=/consul/config/consul.json'
+
+#   vault:
+#     <<: *container-common
+#     image: consensys/quorum-hashicorp-vault-plugin:latest
+#     container_name: vault
+#     tty: true
+#     cap_add:
+#       - IPC_LOCK
+#     volumes:
+#       - ./vault/config/vault.json:/vault/config/vault.json
+#       - ./vault/policies:/vault/policies
+#       - ./vault/data:/vault/data
+#       - ./vault/logs:/vault/logs
+#       - ./vault/plugins:/vault/plugins
+#     environment:
+#       ROOT_TOKEN_PATH: /vault/.root
+#       VAULT_ADDR: http://vault:8200
+#       PLUGIN_MOUNT_PATH: quorum
+#     entrypoint:
+#       - sh
+#       - -c
+#       - |
+#         ( sleep 10 ; vault-init.sh ) &
+#         vault server -config=/vault/config/vault.json
+#     ports:
+#       - 8200:8200
+#     healthcheck:
+#       test: [ "CMD", "wget", "--spider", "--proxy", "off", "http://localhost:8200/v1/sys/health?standbyok=true" ]
+#       interval: 10s
+#       timeout: 3s
+#       retries: 10
+#       start_period: 5s
+
+# networks:
+#   vault:
+#     driver: bridge
