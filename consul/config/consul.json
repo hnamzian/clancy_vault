@@ -1,0 +1,14 @@
+{
+  "server": true,
+  "node_name": "consul",
+  "datacenter": "localhost",
+  "client_addr": "0.0.0.0",
+  "bind_addr": "0.0.0.0",
+  "bootstrap_expect": 1,
+  "data_dir": "/consul/data",
+  "log_level": "DEBUG",
+  "ui": true,
+  "ports": {
+    "dns": 53
+  }
+}
