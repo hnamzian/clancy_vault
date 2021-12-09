@@ -18,7 +18,7 @@ services:
 
   vault:
     <<: *container-common
-    image: consensys/quorum-hashicorp-vault-plugin:latest
+    image: vault:1.8.4
     container_name: vault
     tty: true
     cap_add:
@@ -28,7 +28,8 @@ services:
       - ./vault/policies:/vault/policies
       - ./vault/data:/vault/data
       - ./vault/logs:/vault/logs
-      - ./vault/plugins:/vault/plugins
+      - ./vault/plugins/quorum-hashicorp-vault-plugin:/vault/plugins/quorum-hashicorp-vault-plugin
+      - ./scripts/vault-init.sh:/vault/vault-init.sh
     environment:
       ROOT_TOKEN_PATH: /vault/.root
       VAULT_ADDR: http://vault:8200
@@ -37,7 +38,10 @@ services:
       - sh
       - -c
       - |
-        ( sleep 10 ; vault-init.sh ) &
+        # apk add jq
+        # apk add --no-cache curl
+        # chmod +x /vault/vault-init.sh
+        # ( sleep 10 ; /vault/vault-init.sh ) &
         vault server -config=/vault/config/vault.json
     ports:
       - 8200:8200
