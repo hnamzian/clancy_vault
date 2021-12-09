@@ -1,6 +1,7 @@
 version: "3.7"
 
 x-container-common: &container-common
+  restart: "on-failure"
   networks:
     - vault
 
@@ -20,7 +21,6 @@ services:
     image: consensys/quorum-hashicorp-vault-plugin:latest
     container_name: vault
     tty: true
-    restart: "no"
     cap_add:
       - IPC_LOCK
     volumes:
