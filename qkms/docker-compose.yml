@@ -80,7 +80,7 @@ services:
     command: run
     volumes:
       - ${HOST_MANIFEST_PATH-./manifests}:/manifests:ro
-      - ../vault/token/.root:/vault/token/.root
+      - ../vault/token/root:/vault/token/.root
 
 volumes:
   db-data-api:

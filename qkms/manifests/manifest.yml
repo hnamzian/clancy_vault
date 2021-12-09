@@ -5,5 +5,5 @@
   specs:
     mountPoint: quorum
     address: http://vault:8200
-    tokenPath: /vault/token/root
+    tokenPath: /vault/token/.root
     namespace: demo
