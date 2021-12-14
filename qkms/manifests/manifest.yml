@@ -42,7 +42,7 @@
       addr: https://rpc-mumbai.maticvigil.com
 
 - kind: Node
-  name: mumbai
+  name: polygon
   version: 0.0.0
   specs:
     rpc:
