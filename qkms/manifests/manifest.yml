@@ -26,3 +26,24 @@
       address: http://vault:8200
       tokenPath: /vault/token/.root
       namespace: clancy
+
+- kind: Node
+  name: rinkeby
+  version: 0.0.0
+  specs:
+    rpc:
+      addr: https://rinkeby.infura.io/v3/951c2c9250c841d8a25b21859b6b8a46
+
+- kind: Node
+  name: mumbai
+  version: 0.0.0
+  specs:
+    rpc:
+      addr: https://rpc-mumbai.maticvigil.com
+
+- kind: Node
+  name: mumbai
+  version: 0.0.0
+  specs:
+    rpc:
+      addr: https://polygon-rpc.com
