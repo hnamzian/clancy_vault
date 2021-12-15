@@ -8,6 +8,8 @@ ROOT_TOKEN_PATH=${ROOT_TOKEN_PATH-./vault/token}
 ROOT_TOKEN_FILE_NAME=${ROOT_TOKEN_FILE_NAME-root}
 UNSEAL_KEYS_PATH=${UNSEAL_KEYS_PATH-./vault/unseal}
 UNSEAL_KEYS_FILE_NAME=${UNSEAL_KEYS_FILE_NAME-unseal_keys}
+QKM_TOKEN_PATH=${QKM_TOKEN_PATH-./vault/token}
+QKM_TOKEN_FILE_NAME=${QKM_TOKEN_FILE_NAME-qkm_token}
 PLUGIN_FILE=./vault/plugins/quorum-hashicorp-vault-plugin
 
 echo "[PLUGIN] Initializing Vault: ${VAULT_ADDR}"
@@ -51,7 +53,7 @@ if [ "${PLUGIN_PATH}" != "/vault/plugins" ]; then
   mkdir -p ${PLUGIN_PATH}
   echo "[PLUGIN] Copying plugin to expected folder"
   cp $PLUGIN_FILE "${PLUGIN_PATH}/quorum-hashicorp-vault-plugin"
-fi 
+fi
 
 echo "[PLUGIN] Registering Quorum Hashicorp Vault plugin..."
 SHA256SUM=$(sha256sum -b ${PLUGIN_FILE} | cut -d' ' -f1)
@@ -68,6 +70,27 @@ if [ -n "$ROOT_TOKEN" ]; then
   echo "[PLUGIN] Root token saved in ${ROOT_TOKEN_PATH}"
   mkdir -p ${ROOT_TOKEN_PATH}
   echo "$ROOT_TOKEN" > ${ROOT_TOKEN_PATH}/${ROOT_TOKEN_FILE_NAME}
+fi
+
+echo "[PLUGIN] Creating policies over quorum path..."
+curl \
+  --request POST \
+  --header "X-Vault-Token: ${ROOT_TOKEN}" \
+  --data '{"policy":"path \"secret/quorum/*\" {capabilities = [\"list\",\"create\", \"update\", \"read\", \"delete\"]}"}' \
+  ${VAULT_ADDR}/v1/sys/policy/quorum
+
+echo "[PLUGIN] Creating auth token for QKM..."
+curl -s --request POST --header "X-Vault-Token: ${ROOT_TOKEN}" --data '{"policy": "quorum"}' ${VAULT_ADDR}/v1/auth/token/create > response.json
+
+QKM_TOKEN=$(cat response.json | jq .auth | jq .client_token | tr -d '"')
+echo QKM_TOKEN: $QKM_TOKEN
+
+rm response.json
+
+if [ -n "$QKM_TOKEN" ]; then 
+  echo "[PLUGIN] QKM token saved in ${QKM_TOKEN_PATH}"
+  mkdir -p ${QKM_TOKEN_PATH}
+  echo "$QKM_TOKEN" > ${QKM_TOKEN_PATH}/${QKM_TOKEN_FILE_NAME}
 fi
 
 exit 0
