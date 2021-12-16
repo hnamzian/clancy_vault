@@ -47,3 +47,10 @@
   specs:
     rpc:
       addr: https://polygon-rpc.com
+
+# Admin role manifest
+- kind: Role
+  name: admin
+  specs:
+    permission:
+      - "*:*"
