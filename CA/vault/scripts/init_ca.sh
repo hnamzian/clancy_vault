@@ -2,7 +2,12 @@ ROOT_TOKEN_PATH=${VAULT_CA_ROOT_TOKEN_PATH-./vault/token}
 ROOT_TOKEN_FILE_NAME=${VAULT_CA_ROOT_TOKEN_FILE_NAME-root}
 VAULT_TOKEN=$(cat $ROOT_TOKEN_PATH/$ROOT_TOKEN_FILE_NAME)
 VAULT_ADDR=${VAULT_ADDR-localhost:7200}
-
+CERTS_DIR="./certs"
+CACERT_DIR=$CERTS_DIR/ca
+CACERT_FILENAME=ca.crt
+INT_CA_CERT_DIR=$CERTS_DIR/intermediate_ca
+INT_CA_CSR_FILENAME=intermediate_ca.csr
+INT_CA_CERT_FILENAME=intermediate_ca.crt
 
 vault_post_cmd() {
   path=$1
@@ -27,11 +32,14 @@ generate_root_ca_cert() {
   #   common_name="clancy.com" \
   #   ttl=87600h >CA_cert.crt
 
+  rm -rf $CACERT_DIR
+  mkdir -p $CACERT_DIR
+
   curl --header "X-Vault-Token: $VAULT_TOKEN" \
     --request POST \
     --data '{"common_name":"clancy.com","ttl":"87600h"}' \
     $VAULT_ADDR/v1/pki/root/generate/internal |
-    jq -r ".data.certificate" >CA_cert.crt
+    jq -r ".data.certificate" > $CACERT_DIR/$CACERT_FILENAME
 }
 
 config_cert_urls() {
@@ -58,6 +66,9 @@ generate_int_ca() {
     --data '{"max_lease_ttl":"43800h"}' \
     $VAULT_ADDR/v1/sys/mounts/pki_int/tune
 
+  rm -rf $INT_CA_CERT_DIR
+  mkdir -p $INT_CA_CERT_DIR
+
   # vault write -format=json pki_int/intermediate/generate/internal \
   #   common_name="clancy.com Intermediate Authority" |
   #   jq -r '.data.csr' >pki_intermediate.csr
@@ -65,10 +76,9 @@ generate_int_ca() {
     --request POST \
     --data '{"common_name": "clancy.com Intermediate Authority"}' \
     $VAULT_ADDR/v1/pki_int/intermediate/generate/internal |
-    jq -r '.data.csr' | sed ':a;N;$!ba;s/\n/\\n/g' >pki_intermediate.csr 
+    jq -r '.data.csr' | sed ':a;N;$!ba;s/\n/\\n/g' > $INT_CA_CERT_DIR/$INT_CA_CSR_FILENAME
 
-  PKI_INT_CSR=$(cat pki_intermediate.csr)
-  echo "{\"csr\": \"$PKI_INT_CSR\",\"format\": \"pem_bundle\",\"ttl\": \"43800h\"}"
+  PKI_INT_CSR=$(cat $INT_CA_CERT_DIR/$INT_CA_CSR_FILENAME)
 
   # vault write -format=json pki/root/sign-intermediate csr=@pki_intermediate.csr \
   #   format=pem_bundle ttl="43800h" |
@@ -77,9 +87,9 @@ generate_int_ca() {
     --request POST \
     --data "{\"csr\": \"$PKI_INT_CSR\",\"format\": \"pem_bundle\",\"ttl\": \"43800h\"}" \
     $VAULT_ADDR/v1/pki/root/sign-intermediate \
-    | jq -r '.data.certificate' | sed ':a;N;$!ba;s/\n/\\n/g'  >intermediate.cert.pem
+    | jq -r '.data.certificate' | sed ':a;N;$!ba;s/\n/\\n/g' > $INT_CA_CERT_DIR/$INT_CA_CERT_FILENAME
 
-  PKI_INT_CERT=$(cat intermediate.cert.pem)
+  PKI_INT_CERT=$(cat $INT_CA_CERT_DIR/$INT_CA_CERT_FILENAME)
 
   # vault write pki_int/intermediate/set-signed certificate=@intermediate.cert.pem
   curl --header "X-Vault-Token: $VAULT_TOKEN" \
@@ -107,7 +117,7 @@ create_role() {
 request_cert() {
   ROLE_NAME=$1
   CN=$2
-  CERTS_PATH=$3
+  CERTS_PATH=$CERTS_DIR/$3
 
   # vault write pki_int/issue/consul-dc1 \
   #   common_name="server.dc1.consul" \
@@ -127,6 +137,8 @@ request_cert() {
   $(cat tmp.txt | jq .issuing_ca | tr -d '"' | awk '{gsub("\\\\n","\n")};1' | tee $CERTS_PATH/ca.crt)
   $(cat tmp.txt | jq .ca_chain | tr -d '[' | tr -d '"' | tr -d ']' | awk '{gsub("\\\\n","\n")};1' | tee $CERTS_PATH/chain.crt)
 
+  rm tmp.txt
+  
   echo $tmp_key
 }
 
@@ -140,10 +152,10 @@ generate_int_ca
 
 create_role "clancy-dot-com" "clancy.com"
 
-request_cert "clancy-dot-com" "consul.clancy.com" "certs/consul"
-request_cert "clancy-dot-com" "consul-client.clancy.com" "certs/consul_client"
-request_cert "clancy-dot-com" "vault.clancy.com" "certs/vault"
-request_cert "clancy-dot-com" "vault-client.clancy.com" "certs/vault_client"
-request_cert "clancy-dot-com" "qkms.clancy.com" "certs/qkms"
-request_cert "clancy-dot-com" "qkms-client.clancy.com" "certs/qkms_client"
-request_cert "clancy-dot-com" "postgres.clancy.com" "certs/postgres"
+request_cert "clancy-dot-com" "consul.clancy.com" "consul"
+request_cert "clancy-dot-com" "consul-client.clancy.com" "consul_client"
+request_cert "clancy-dot-com" "vault.clancy.com" "vault"
+request_cert "clancy-dot-com" "vault-client.clancy.com" "vault_client"
+request_cert "clancy-dot-com" "qkms.clancy.com" "qkms"
+request_cert "clancy-dot-com" "qkms-client.clancy.com" "qkms_client"
+request_cert "clancy-dot-com" "postgres.clancy.com" "postgres"
