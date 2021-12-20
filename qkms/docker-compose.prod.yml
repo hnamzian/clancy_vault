@@ -76,7 +76,7 @@ services:
     image: consensys/quorum-key-manager:latest
     environment:
       <<: *default-variables
-      MANIFEST_PATH: ${MANIFEST_PATH-/manifests}
+      MANIFEST_PATH: /manifests
     ports:
       - 8080:8080
       - 8081:8081
@@ -84,8 +84,7 @@ services:
       - migration
     command: run
     volumes:
-      - ${HOST_MANIFEST_PATH-./manifests}:/manifests:ro
-      - ./config/apikey:/apikey:ro
+      - ${HOST_MANIFEST_PATH-./manifests/prod}:/manifests:ro
       - ../vault/token/qkm_token:/vault/token/.root
       - ../certs/qkms:/tls
 
