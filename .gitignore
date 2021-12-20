@@ -3,3 +3,14 @@ vault/logs
 vault/policies
 vault/token
 vault/unseal
+
+qkms/config/apikey
+
+CA/certs
+CA/vault/data
+CA/vault/logs
+CA/vault/policies
+CA/vault/token
+CA/vault/unseal
+
+certs
