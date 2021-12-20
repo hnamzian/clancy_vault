@@ -5,6 +5,7 @@ dev:
 	@docker-compose -f qkms/docker-compose.dev.yml up -d
 
 prod:
+	@make ca
 	@docker-compose -f docker-compose.prod.yml up -d
 	@sleep 10
 	@./scripts/vault-init-tls.sh
