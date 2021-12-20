@@ -1,0 +1,65 @@
+- kind: HashicorpSecrets
+  version: 0.0.1
+  name: hashicorp-secrets
+  specs:
+    mountPoint: secret
+    address: https://vault-client.clancy.com:8200
+    tokenPath: /vault/token/.root
+    namespace: clancy
+    clientCert: /tls/tls.crt
+    clientKey: /tls/tls.key
+    CACert: /tls/ca.crt
+
+- kind: HashicorpKeys
+  version: 0.0.1
+  name: hashicorp-keys
+  specs:
+    mountPoint: quorum
+    address: https://vault-client.clancy.com:8200
+    tokenPath: /vault/token/.root
+    namespace: clancy
+    clientCert: /tls/tls.crt
+    clientKey: /tls/tls.key
+    CACert: /tls/ca.crt
+
+- kind: Ethereum
+  version: 0.0.1
+  name: eth-accounts
+  specs:
+    keystore: HashicorpKeys
+    specs:
+      mountPoint: quorum
+      address: https://vault-client.clancy.com:8200
+      tokenPath: /vault/token/.root
+      namespace: clancy
+      clientCert: /tls/tls.crt
+      clientKey: /tls/tls.key
+      CACert: /tls/ca.crt
+
+- kind: Node
+  name: rinkeby
+  version: 0.0.0
+  specs:
+    rpc:
+      addr: https://rinkeby.infura.io/v3/951c2c9250c841d8a25b21859b6b8a46
+
+- kind: Node
+  name: mumbai
+  version: 0.0.0
+  specs:
+    rpc:
+      addr: https://rpc-mumbai.maticvigil.com
+
+- kind: Node
+  name: polygon
+  version: 0.0.0
+  specs:
+    rpc:
+      addr: https://polygon-rpc.com
+
+# Admin role manifest
+- kind: Role
+  name: admin
+  specs:
+    permission:
+      - "*:*"
