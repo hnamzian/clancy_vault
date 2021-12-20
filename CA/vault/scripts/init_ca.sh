@@ -8,6 +8,14 @@ CACERT_FILENAME=ca.crt
 INT_CA_CERT_DIR=$CERTS_DIR/intermediate_ca
 INT_CA_CSR_FILENAME=intermediate_ca.csr
 INT_CA_CERT_FILENAME=intermediate_ca.crt
+PKI_ROLES_CONFIG_DIR="./CA/config/roles"
+PKI_ROLE_CONSUL_CLUSTER_CONFIG_DIR=$PKI_ROLES_CONFIG_DIR/consul-cluster/consul-cluster.json
+PKI_ROLE_CONSUL_CLIENT_CONFIG_DIR=$PKI_ROLES_CONFIG_DIR/consul-client/consul-client.json
+PKI_ROLE_VAULT_CLUSTER_CONFIG_DIR=$PKI_ROLES_CONFIG_DIR/vault-cluster/vault-cluster.json
+PKI_ROLE_VAULT_CLIENT_CONFIG_DIR=$PKI_ROLES_CONFIG_DIR/vault-client/vault-client.json
+PKI_ROLE_QKMS_SERVER_CONFIG_DIR=$PKI_ROLES_CONFIG_DIR/qkms-server/qkms-server.json
+PKI_ROLE_QKMS_CLIENT_CONFIG_DIR=$PKI_ROLES_CONFIG_DIR/qkms-client/qkms-client.json
+PKI_ROLE_POSTGRES_CONFIG_DIR=$PKI_ROLES_CONFIG_DIR/postgres/postgres.json
 
 vault_post_cmd() {
   path=$1
@@ -100,7 +108,7 @@ generate_int_ca() {
 
 create_role() {
   ROLE_NAME=$1
-  DOMAIN=$2
+  ROLE_CONFIG_DIR=$2
 
   # vault write pki_int/roles/$ROLE_NAME \
   #   allowed_domains=$DOMAIN \
@@ -110,7 +118,7 @@ create_role() {
 
   curl --header "X-Vault-Token: $VAULT_TOKEN" \
     --request POST \
-    --data '{"allowed_domains": "'$DOMAIN'","allow_subdomains": true, "allow_bare_domains": true, "allow_glob_domains": true, "max_ttl": "720h"}' \
+    --data @$ROLE_CONFIG_DIR \
     $VAULT_ADDR/v1/pki_int/roles/$ROLE_NAME
 }
 
@@ -138,7 +146,7 @@ request_cert() {
   $(cat tmp.txt | jq .ca_chain | tr -d '[' | tr -d '"' | tr -d ']' | awk '{gsub("\\\\n","\n")};1' | tee $CERTS_PATH/chain.crt)
 
   rm tmp.txt
-  
+
   echo $tmp_key
 }
 
@@ -150,12 +158,23 @@ config_cert_urls
 
 generate_int_ca
 
-create_role "clancy-dot-com" "clancy.com"
+create_role "consul-cluster-clancy-dot-com" $PKI_ROLE_CONSUL_CLUSTER_CONFIG_DIR
+request_cert "consul-cluster-clancy-dot-com" "consul.clancy.com" "consul"
 
-request_cert "clancy-dot-com" "consul.clancy.com" "consul"
-request_cert "clancy-dot-com" "consul-client.clancy.com" "consul_client"
-request_cert "clancy-dot-com" "vault.clancy.com" "vault"
-request_cert "clancy-dot-com" "vault-client.clancy.com" "vault_client"
-request_cert "clancy-dot-com" "qkms.clancy.com" "qkms"
-request_cert "clancy-dot-com" "qkms-client.clancy.com" "qkms_client"
-request_cert "clancy-dot-com" "postgres.clancy.com" "postgres"
+create_role "consul-client-clancy-dot-com" $PKI_ROLE_CONSUL_CLIENT_CONFIG_DIR
+request_cert "consul-client-clancy-dot-com" "consul-client.clancy.com" "consul_client"
+
+create_role "vault-cluster-clancy-dot-com" $PKI_ROLE_VAULT_CLUSTER_CONFIG_DIR
+request_cert "vault-cluster-clancy-dot-com" "vault.clancy.com" "vault"
+
+create_role "vault-client-clancy-dot-com" $PKI_ROLE_VAULT_CLIENT_CONFIG_DIR
+request_cert "vault-client-clancy-dot-com" "vault-client.clancy.com" "vault_client"
+
+create_role "qkms-server-clancy-dot-com" $PKI_ROLE_QKMS_SERVER_CONFIG_DIR
+request_cert "qkms-server-clancy-dot-com" "qkms.clancy.com" "qkms"
+
+create_role "qkms-client-clancy-dot-com" $PKI_ROLE_QKMS_CLIENT_CONFIG_DIR
+request_cert "qkms-client-clancy-dot-com" "qkms-client.clancy.com" "qkms_client"
+
+create_role "postgres-clancy-dot-com" $PKI_ROLE_POSTGRES_CONFIG_DIR
+request_cert "postgres-clancy-dot-com" "postgres.clancy.com" "postgres"
