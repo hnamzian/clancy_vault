@@ -14,7 +14,7 @@ PLUGIN_FILE=./vault/plugins/quorum-hashicorp-vault-plugin
 
 echo "[PLUGIN] Initializing Vault: ${VAULT_ADDR}"
 init_vault() {
-  curl -k --cacert $VAULT_CA_CERT --request POST \
+  curl -k -s --cacert $VAULT_CA_CERT --request POST \
     --cert $VAULT_CLIENT_CERT --key $VAULT_CLIENT_KEY \
     --data '{"secret_shares": 7, "secret_threshold": 4}' ${VAULT_ADDR}/v1/sys/init >response.json
 
@@ -47,25 +47,25 @@ init_vault() {
 }
 
 unseal_vault() {
-  curl -k --cacert $VAULT_CA_CERT --request POST \
+  curl -k -s --cacert $VAULT_CA_CERT --request POST \
     --cert $VAULT_CLIENT_CERT --key $VAULT_CLIENT_KEY \
     --data '{"key": '${UNSEAL_KEY_0}'}' ${VAULT_ADDR}/v1/sys/unseal
 
-  curl -k --cacert $VAULT_CA_CERT --request POST \
+  curl -k -s --cacert $VAULT_CA_CERT --request POST \
     --cert $VAULT_CLIENT_CERT --key $VAULT_CLIENT_KEY \
     --data '{"key": '${UNSEAL_KEY_1}'}' ${VAULT_ADDR}/v1/sys/unseal
 
-  curl -k --cacert $VAULT_CA_CERT --request POST \
+  curl -k -s --cacert $VAULT_CA_CERT --request POST \
     --cert $VAULT_CLIENT_CERT --key $VAULT_CLIENT_KEY \
     --data '{"key": '${UNSEAL_KEY_2}'}' ${VAULT_ADDR}/v1/sys/unseal
 
-  curl -k --cacert $VAULT_CA_CERT --request POST \
+  curl -k -s --cacert $VAULT_CA_CERT --request POST \
     --cert $VAULT_CLIENT_CERT --key $VAULT_CLIENT_KEY \
     --data '{"key": '${UNSEAL_KEY_3}'}' ${VAULT_ADDR}/v1/sys/unseal
 }
 
 enable_kv2_key_engine() {
-  curl --cacert $VAULT_CA_CERT --header "X-Vault-Token: ${VAULT_TOKEN}" --request POST \
+  curl -k -s --cacert $VAULT_CA_CERT --header "X-Vault-Token: ${VAULT_TOKEN}" --request POST \
     --cert $VAULT_CLIENT_CERT --key $VAULT_CLIENT_KEY \
     --data '{"type": "kv-v2", "config": {"force_no_cache": true} }' \
     ${VAULT_ADDR}/v1/sys/mounts/secret
@@ -81,7 +81,7 @@ register_plugin() {
   echo "[PLUGIN] Registering Quorum Hashicorp Vault plugin..."
   SHA256SUM=$(sha256sum -b ${PLUGIN_FILE} | cut -d' ' -f1)
 
-  curl -k --cacert $VAULT_CA_CERT --header "X-Vault-Token: ${VAULT_TOKEN}" --request POST \
+  curl -k -s --cacert $VAULT_CA_CERT --header "X-Vault-Token: ${VAULT_TOKEN}" --request POST \
     --cert $VAULT_CLIENT_CERT --key $VAULT_CLIENT_KEY \
     --data "{\"sha256\": \"${SHA256SUM}\", \"command\": \"quorum-hashicorp-vault-plugin\" }" \
     ${VAULT_ADDR}/v1/sys/plugins/catalog/secret/quorum-hashicorp-vault-plugin
@@ -89,7 +89,7 @@ register_plugin() {
 
 enable_plugin() {
   echo "[PLUGIN] Enabling Quorum Hashicorp Vault engine..."
-  curl -k --cacert $VAULT_CA_CERT --header "X-Vault-Token: ${VAULT_TOKEN}" --request POST \
+  curl -k -s --cacert $VAULT_CA_CERT --header "X-Vault-Token: ${VAULT_TOKEN}" --request POST \
     --cert $VAULT_CLIENT_CERT --key $VAULT_CLIENT_KEY \
     --data '{"type": "plugin", "plugin_name": "quorum-hashicorp-vault-plugin", "config": {"force_no_cache": true, "passthrough_request_headers": ["X-Vault-Namespace"]} }' \
     ${VAULT_ADDR}/v1/sys/mounts/quorum
@@ -126,18 +126,22 @@ creat_plugin_policies() {
   fi
 }
 
-echo "[CA] Initializing Vault: ${VAULT_ADDR}"
+echo "[Vault Server] Initializing Vault: ${VAULT_ADDR}"
 init_vault
 
-echo "[CA] Unsealing vault..."
+echo "[Vault Server] Unsealing vault..."
 unseal_vault
 
+echo "[Vault Server] Enable KV2 Key engine"
 enable_kv2_key_engine
 
+echo "[Vault Server] Register Quorum Plugin"
 register_plugin
 
+echo "[Vault Server] Enable Quorum Plugin"
 enable_plugin
 
+echo "[Vault Server] Create Policies over Quorum mount path"
 creat_plugin_policies
 
 exit 0
