@@ -1,4 +1,4 @@
-ROOT_TOKEN_PATH=${VAULT_CA_ROOT_TOKEN_PATH-./vault/token}
+ROOT_TOKEN_PATH=${VAULT_CA_ROOT_TOKEN_PATH-./CA/vault/token}
 ROOT_TOKEN_FILE_NAME=${VAULT_CA_ROOT_TOKEN_FILE_NAME-root}
 VAULT_TOKEN=$(cat $ROOT_TOKEN_PATH/$ROOT_TOKEN_FILE_NAME)
 VAULT_ADDR=${VAULT_ADDR-localhost:7200}
@@ -21,7 +21,7 @@ vault_post_cmd() {
   path=$1
   data=$2
 
-  curl --header "X-Vault-Token: $VAULT_TOKEN" \
+  curl -s --header "X-Vault-Token: $VAULT_TOKEN" \
     --request POST \
     $VAULT_ADDR/$1 \
     --data $2
@@ -43,7 +43,7 @@ generate_root_ca_cert() {
   rm -rf $CACERT_DIR
   mkdir -p $CACERT_DIR
 
-  curl --header "X-Vault-Token: $VAULT_TOKEN" \
+  curl -s --header "X-Vault-Token: $VAULT_TOKEN" \
     --request POST \
     --data '{"common_name":"clancy.com","ttl":"87600h"}' \
     $VAULT_ADDR/v1/pki/root/generate/internal |
@@ -55,7 +55,7 @@ config_cert_urls() {
   #   issuing_certificates="$VAULT_ADDR/v1/pki/ca" \
   #   crl_distribution_points="$VAULT_ADDR/v1/pki/crl"
 
-  curl --header "X-Vault-Token: $VAULT_TOKEN" \
+  curl -s --header "X-Vault-Token: $VAULT_TOKEN" \
     --request POST \
     --data '{"issuing_certificates": "'${VAULT_ADDR}'/v1/pki/ca","crl_distribution_points": "'${VAULT_ADDR}'/v1/pki/crl"}' \
     $VAULT_ADDR/v1/pki/config/urls
@@ -63,13 +63,13 @@ config_cert_urls() {
 
 generate_int_ca() {
   # vault secrets enable -path=pki_int pki
-  curl --header "X-Vault-Token: $VAULT_TOKEN" \
+  curl -s --header "X-Vault-Token: $VAULT_TOKEN" \
     --request POST \
     --data '{"type":"pki"}' \
     $VAULT_ADDR/v1/sys/mounts/pki_int
 
   # vault secrets tune -max-lease-ttl=43800h pki_int
-  curl --header "X-Vault-Token: $VAULT_TOKEN" \
+  curl -s --header "X-Vault-Token: $VAULT_TOKEN" \
     --request POST \
     --data '{"max_lease_ttl":"43800h"}' \
     $VAULT_ADDR/v1/sys/mounts/pki_int/tune
@@ -80,7 +80,7 @@ generate_int_ca() {
   # vault write -format=json pki_int/intermediate/generate/internal \
   #   common_name="clancy.com Intermediate Authority" |
   #   jq -r '.data.csr' >pki_intermediate.csr
-  curl --header "X-Vault-Token: $VAULT_TOKEN" \
+  curl -s --header "X-Vault-Token: $VAULT_TOKEN" \
     --request POST \
     --data '{"common_name": "clancy.com Intermediate Authority"}' \
     $VAULT_ADDR/v1/pki_int/intermediate/generate/internal |
@@ -91,7 +91,7 @@ generate_int_ca() {
   # vault write -format=json pki/root/sign-intermediate csr=@pki_intermediate.csr \
   #   format=pem_bundle ttl="43800h" |
   #   jq -r '.data.certificate' >intermediate.cert.pem
-  curl --header "X-Vault-Token: $VAULT_TOKEN" \
+  curl -s --header "X-Vault-Token: $VAULT_TOKEN" \
     --request POST \
     --data "{\"csr\": \"$PKI_INT_CSR\",\"format\": \"pem_bundle\",\"ttl\": \"43800h\"}" \
     $VAULT_ADDR/v1/pki/root/sign-intermediate \
@@ -100,7 +100,7 @@ generate_int_ca() {
   PKI_INT_CERT=$(cat $INT_CA_CERT_DIR/$INT_CA_CERT_FILENAME)
 
   # vault write pki_int/intermediate/set-signed certificate=@intermediate.cert.pem
-  curl --header "X-Vault-Token: $VAULT_TOKEN" \
+  curl -s --header "X-Vault-Token: $VAULT_TOKEN" \
     --request POST \
     --data "{\"certificate\": \"$PKI_INT_CERT\"}\"}" \
     $VAULT_ADDR/v1/pki_int/intermediate/set-signed
@@ -116,7 +116,7 @@ create_role() {
   #   generate_lease=true \
   #   max_ttl="720h"
 
-  curl --header "X-Vault-Token: $VAULT_TOKEN" \
+  curl -s --header "X-Vault-Token: $VAULT_TOKEN" \
     --request POST \
     --data @$ROLE_CONFIG_DIR \
     $VAULT_ADDR/v1/pki_int/roles/$ROLE_NAME
@@ -131,7 +131,7 @@ request_cert() {
   #   common_name="server.dc1.consul" \
   #   ttl="24h" | tee consul-certs.txt
 
-  curl --header "X-Vault-Token: $VAULT_TOKEN" \
+  curl -s --header "X-Vault-Token: $VAULT_TOKEN" \
     --request POST \
     --data '{"common_name": "'$CN'", "ttl": "2400h"}' \
     $VAULT_ADDR/v1/pki_int/issue/$ROLE_NAME |
@@ -140,41 +140,59 @@ request_cert() {
   rm -rf $CERTS_PATH
   mkdir -p $CERTS_PATH
 
-  $(cat tmp.txt | jq .private_key | tr -d '"' | awk '{gsub("\\\\n","\n")};1' | tee $CERTS_PATH/tls.key)
-  $(cat tmp.txt | jq .certificate | tr -d '"' | awk '{gsub("\\\\n","\n")};1' | tee $CERTS_PATH/tls.crt)
-  $(cat tmp.txt | jq .issuing_ca | tr -d '"' | awk '{gsub("\\\\n","\n")};1' | tee $CERTS_PATH/ca.crt)
-  $(cat tmp.txt | jq .ca_chain | tr -d '[' | tr -d '"' | tr -d ']' | awk '{gsub("\\\\n","\n")};1' | tee $CERTS_PATH/chain.crt)
+  PRIVATE_KEY=$(cat tmp.txt | jq .private_key | tr -d '"' | awk '{gsub("\\\\n","\n")};1' | tee $CERTS_PATH/tls.key)
+  CERTIFICATE=$(cat tmp.txt | jq .certificate | tr -d '"' | awk '{gsub("\\\\n","\n")};1' | tee $CERTS_PATH/tls.crt)
+  CA_CERT=$(cat tmp.txt | jq .issuing_ca | tr -d '"' | awk '{gsub("\\\\n","\n")};1' | tee $CERTS_PATH/ca.crt)
+  CHAIN_CERTS=$(cat tmp.txt | jq .ca_chain | tr -d '[' | tr -d '"' | tr -d ']' | awk '{gsub("\\\\n","\n")};1' | tee $CERTS_PATH/chain.crt)
 
   rm tmp.txt
 
   echo $tmp_key
 }
 
+echo [Vault CA] Enable Vault PKI
 enable_pki
 
+echo [Vault CA] Generate Root CA Certificate
 generate_root_ca_cert
 
+echo [Vault CA] Generate Root CA Certificate
 config_cert_urls
 
+echo [Vault CA] Configure Certificate Issue URL
 generate_int_ca
 
+echo [Vault CA] Create "consul-cluster-clancy-dot-com" User
 create_role "consul-cluster-clancy-dot-com" $PKI_ROLE_CONSUL_CLUSTER_CONFIG_DIR
+echo [Vault CA] Generate "consul_server" TLS PKI
 request_cert "consul-cluster-clancy-dot-com" "consul.clancy.com" "consul"
 
+echo [Vault CA] Create "consul-client-clancy-dot-com" User
 create_role "consul-client-clancy-dot-com" $PKI_ROLE_CONSUL_CLIENT_CONFIG_DIR
+echo [Vault CA] Generate "consul_client" TLS PKI
 request_cert "consul-client-clancy-dot-com" "consul-client.clancy.com" "consul_client"
 
+echo [Vault CA] Create "vault-cluster-clancy-dot-com" User
 create_role "vault-cluster-clancy-dot-com" $PKI_ROLE_VAULT_CLUSTER_CONFIG_DIR
+echo [Vault CA] Generate "vault_server" TLS PKI
 request_cert "vault-cluster-clancy-dot-com" "vault.clancy.com" "vault"
 
+echo [Vault CA] Create "vault-client-clancy-dot-com" User
 create_role "vault-client-clancy-dot-com" $PKI_ROLE_VAULT_CLIENT_CONFIG_DIR
+echo [Vault CA] Generate "vault_client" TLS PKI
 request_cert "vault-client-clancy-dot-com" "vault-client.clancy.com" "vault_client"
 
+echo [Vault CA] Create "qkms-server-clancy-dot-com" User
 create_role "qkms-server-clancy-dot-com" $PKI_ROLE_QKMS_SERVER_CONFIG_DIR
+echo [Vault CA] Generate "qkms_server" TLS PKI
 request_cert "qkms-server-clancy-dot-com" "qkms.clancy.com" "qkms"
 
+echo [Vault CA] Create "qkms-client-clancy-dot-com" User
 create_role "qkms-client-clancy-dot-com" $PKI_ROLE_QKMS_CLIENT_CONFIG_DIR
+echo [Vault CA] Generate "qkms_client" TLS PKI
 request_cert "qkms-client-clancy-dot-com" "qkms-client.clancy.com" "qkms_client"
 
+echo [Vault CA] Create "postgres-clancy-dot-com" User
 create_role "postgres-clancy-dot-com" $PKI_ROLE_POSTGRES_CONFIG_DIR
+echo [Vault CA] Generate "postgres" TLS PKI
 request_cert "postgres-clancy-dot-com" "postgres.clancy.com" "postgres"
