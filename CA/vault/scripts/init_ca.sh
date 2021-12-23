@@ -16,6 +16,14 @@ PKI_ROLE_VAULT_CLIENT_CONFIG_DIR=$PKI_ROLES_CONFIG_DIR/vault-client/vault-client
 PKI_ROLE_QKMS_SERVER_CONFIG_DIR=$PKI_ROLES_CONFIG_DIR/qkms-server/qkms-server.json
 PKI_ROLE_QKMS_CLIENT_CONFIG_DIR=$PKI_ROLES_CONFIG_DIR/qkms-client/qkms-client.json
 PKI_ROLE_POSTGRES_CONFIG_DIR=$PKI_ROLES_CONFIG_DIR/postgres/postgres.json
+CERT_CONFIGS_DIR="./CA/config/certs"
+CERT_CONFIG_CONSUL_CLUSTER_CONFIG_DIR=$CERT_CONFIGS_DIR/consul-cluster/consul-cluster.json
+CERT_CONFIG_CONSUL_CLIENT_CONFIG_DIR=$CERT_CONFIGS_DIR/consul-client/consul-client.json
+CERT_CONFIG_VAULT_CLUSTER_CONFIG_DIR=$CERT_CONFIGS_DIR/vault-cluster/vault-cluster.json
+CERT_CONFIG_VAULT_CLIENT_CONFIG_DIR=$CERT_CONFIGS_DIR/vault-client/vault-client.json
+CERT_CONFIG_QKMS_SERVER_CONFIG_DIR=$CERT_CONFIGS_DIR/qkms-server/qkms-server.json
+CERT_CONFIG_QKMS_CLIENT_CONFIG_DIR=$CERT_CONFIGS_DIR/qkms-client/qkms-client.json
+CERT_CONFIG_POSTGRES_CONFIG_DIR=$CERT_CONFIGS_DIR/postgres/postgres.json
 
 vault_post_cmd() {
   path=$1
@@ -46,8 +54,8 @@ generate_root_ca_cert() {
   curl -s --header "X-Vault-Token: $VAULT_TOKEN" \
     --request POST \
     --data '{"common_name":"clancy.com","ttl":"87600h"}' \
-    $VAULT_ADDR/v1/pki/root/generate/internal |
-    jq -r ".data.certificate" > $CACERT_DIR/$CACERT_FILENAME
+    $VAULT_ADDR/v1/pki/root/generate/internal \
+    | jq -r ".data.certificate" > $CACERT_DIR/$CACERT_FILENAME
 }
 
 config_cert_urls() {
@@ -124,7 +132,7 @@ create_role() {
 
 request_cert() {
   ROLE_NAME=$1
-  CN=$2
+  CERTS_CONFIG_DIR=$2
   CERTS_PATH=$CERTS_DIR/$3
 
   # vault write pki_int/issue/consul-dc1 \
@@ -133,9 +141,9 @@ request_cert() {
 
   curl -s --header "X-Vault-Token: $VAULT_TOKEN" \
     --request POST \
-    --data '{"common_name": "'$CN'", "ttl": "2400h"}' \
-    $VAULT_ADDR/v1/pki_int/issue/$ROLE_NAME |
-    jq .'data' >tmp.txt
+    --data @$CERTS_CONFIG_DIR \
+    $VAULT_ADDR/v1/pki_int/issue/$ROLE_NAME \
+    | jq .'data' >tmp.txt
 
   rm -rf $CERTS_PATH
   mkdir -p $CERTS_PATH
@@ -165,34 +173,34 @@ generate_int_ca
 echo [Vault CA] Create "consul-cluster-clancy-dot-com" User
 create_role "consul-cluster-clancy-dot-com" $PKI_ROLE_CONSUL_CLUSTER_CONFIG_DIR
 echo [Vault CA] Generate "consul_server" TLS PKI
-request_cert "consul-cluster-clancy-dot-com" "consul.clancy.com" "consul"
+request_cert "consul-cluster-clancy-dot-com" $CERT_CONFIG_CONSUL_CLUSTER_CONFIG_DIR "consul"
 
 echo [Vault CA] Create "consul-client-clancy-dot-com" User
 create_role "consul-client-clancy-dot-com" $PKI_ROLE_CONSUL_CLIENT_CONFIG_DIR
 echo [Vault CA] Generate "consul_client" TLS PKI
-request_cert "consul-client-clancy-dot-com" "consul-client.clancy.com" "consul_client"
+request_cert "consul-client-clancy-dot-com" $CERT_CONFIG_CONSUL_CLIENT_CONFIG_DIR "consul_client"
 
 echo [Vault CA] Create "vault-cluster-clancy-dot-com" User
 create_role "vault-cluster-clancy-dot-com" $PKI_ROLE_VAULT_CLUSTER_CONFIG_DIR
 echo [Vault CA] Generate "vault_server" TLS PKI
-request_cert "vault-cluster-clancy-dot-com" "vault.clancy.com" "vault"
+request_cert "vault-cluster-clancy-dot-com" $CERT_CONFIG_VAULT_CLUSTER_CONFIG_DIR "vault"
 
 echo [Vault CA] Create "vault-client-clancy-dot-com" User
 create_role "vault-client-clancy-dot-com" $PKI_ROLE_VAULT_CLIENT_CONFIG_DIR
 echo [Vault CA] Generate "vault_client" TLS PKI
-request_cert "vault-client-clancy-dot-com" "vault-client.clancy.com" "vault_client"
+request_cert "vault-client-clancy-dot-com" $CERT_CONFIG_VAULT_CLIENT_CONFIG_DIR "vault_client"
 
 echo [Vault CA] Create "qkms-server-clancy-dot-com" User
 create_role "qkms-server-clancy-dot-com" $PKI_ROLE_QKMS_SERVER_CONFIG_DIR
 echo [Vault CA] Generate "qkms_server" TLS PKI
-request_cert "qkms-server-clancy-dot-com" "qkms.clancy.com" "qkms"
+request_cert "qkms-server-clancy-dot-com" $CERT_CONFIG_QKMS_SERVER_CONFIG_DIR "qkms"
 
 echo [Vault CA] Create "qkms-client-clancy-dot-com" User
 create_role "qkms-client-clancy-dot-com" $PKI_ROLE_QKMS_CLIENT_CONFIG_DIR
 echo [Vault CA] Generate "qkms_client" TLS PKI
-request_cert "qkms-client-clancy-dot-com" "qkms-client.clancy.com" "qkms_client"
+request_cert "qkms-client-clancy-dot-com" $CERT_CONFIG_QKMS_CLIENT_CONFIG_DIR "qkms_client"
 
 echo [Vault CA] Create "postgres-clancy-dot-com" User
 create_role "postgres-clancy-dot-com" $PKI_ROLE_POSTGRES_CONFIG_DIR
 echo [Vault CA] Generate "postgres" TLS PKI
-request_cert "postgres-clancy-dot-com" "postgres.clancy.com" "postgres"
+request_cert "postgres-clancy-dot-com" $CERT_CONFIG_POSTGRES_CONFIG_DIR "postgres"
