@@ -3,7 +3,7 @@
   name: hashicorp-secrets
   specs:
     mountPoint: secret
-    address: https://vault-client.clancy.com:8200
+    address: https://vault:8200
     tokenPath: /vault/token/.root
     namespace: clancy
     clientCert: /tls/tls.crt
@@ -15,7 +15,7 @@
   name: hashicorp-keys
   specs:
     mountPoint: quorum
-    address: https://vault-client.clancy.com:8200
+    address: https://vault:8200
     tokenPath: /vault/token/.root
     namespace: clancy
     clientCert: /tls/tls.crt
@@ -29,7 +29,7 @@
     keystore: HashicorpKeys
     specs:
       mountPoint: quorum
-      address: https://vault-client.clancy.com:8200
+      address: https://vault:8200
       tokenPath: /vault/token/.root
       namespace: clancy
       clientCert: /tls/tls.crt
