@@ -13,4 +13,4 @@ CA/vault/policies
 CA/vault/token
 CA/vault/unseal
 
-certs
+/certs
