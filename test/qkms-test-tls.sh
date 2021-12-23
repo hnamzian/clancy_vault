@@ -21,7 +21,7 @@ import_account() {
 
   curl -k --cacert $QKMS_CA_CERT --request POST \
     --cert $QKMS_CLIENT_CERT --key $QKMS_CLIENT_KEY \
-    -d '{ "keyId": '$KEY_ID', "privateKey": '$PRIV_KEY', "tags": { "property1": "string", "property2": "string" } }' \
+    -d '{ "keyId": "'$KEY_ID'", "privateKey": "'$PRIV_KEY'", "tags": { "property1": "string", "property2": "string" } }' \
     $QKMS_ADDR/stores/eth-accounts/ethereum/import
 }
 
