@@ -25,7 +25,7 @@ services:
   vault:
     <<: *container-common
     image: vault:1.8.4
-    container_name: vault-client.clancy.com
+    container_name: vault
     tty: true
     # cap_add:
     #   - IPC_LOCK

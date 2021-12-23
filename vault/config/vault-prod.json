@@ -17,7 +17,7 @@
   "disable_mlock": true,
   "default_lease_ttl": "15m",
   "max_lease_ttl": "30m",
-  "api_addr": "https://vault-client.clancy.com:8200",
+  "api_addr": "https://vault:8200",
   "plugin_directory": "/vault/plugins",
   "log_level": "Debug",
   "ui": true
