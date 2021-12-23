@@ -14,3 +14,5 @@ CA/vault/token
 CA/vault/unseal
 
 /certs
+
+.env
