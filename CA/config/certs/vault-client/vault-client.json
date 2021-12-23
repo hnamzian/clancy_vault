@@ -1,0 +1,6 @@
+{
+  "common_name": "vault-c1",
+  "ttl": "2400h",
+  "exclude_cn_from_sans": "true",
+  "alt_names": "vault"
+}
