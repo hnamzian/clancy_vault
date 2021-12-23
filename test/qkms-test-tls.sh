@@ -1,8 +1,7 @@
-BASE_DIR=$HOME/workspace/Convergence/clancy
-ENV_DIR=$BASE_DIR/test/.env
-QKMS_CA_CERT=$BASE_DIR/certs/qkms_client/ca.crt
-QKMS_CLIENT_CERT=$BASE_DIR/certs/qkms_client/tls.crt
-QKMS_CLIENT_KEY=$BASE_DIR/certs/qkms_client/tls.key
+ENV_DIR=./test/.env
+QKMS_CA_CERT=./certs/qkms_client/ca.crt
+QKMS_CLIENT_CERT=./certs/qkms_client/tls.crt
+QKMS_CLIENT_KEY=./certs/qkms_client/tls.key
 
 load_dotenv() {
   if [ -f $ENV_DIR ]; then
@@ -40,7 +39,6 @@ send_eth_transaction() {
           "data": "0x6057361d0000000000000000000000000000000000000000000000000000000000000001",
           "gasPrice": "0x1944883241",
           "value": "0x0"
-          
         }
       ],
       "id":1

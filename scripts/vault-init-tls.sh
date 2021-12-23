@@ -1,6 +1,6 @@
-VAULT_CA_CERT="$HOME/workspace/Convergence/clancy/certs/vault_client/ca.crt"
-VAULT_CLIENT_CERT="$HOME/workspace/Convergence/clancy/certs/vault_client/tls.crt"
-VAULT_CLIENT_KEY="$HOME/workspace/Convergence/clancy/certs/vault_client/tls.key"
+VAULT_CA_CERT="./certs/vault_client/ca.crt"
+VAULT_CLIENT_CERT="./certs/vault_client/tls.crt"
+VAULT_CLIENT_KEY="./certs/vault_client/tls.key"
 VAULT_ADDR=${VAULT_ADDR-https://localhost:8200}
 PLUGIN_PATH=${PLUGIN_PATH-/vault/plugins}
 PLUGIN_MOUNT_PATH=${PLUGIN_MOUNT_PATH-quorum}
