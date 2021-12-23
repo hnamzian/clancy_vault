@@ -24,3 +24,6 @@ down:
 	sudo rm -rf ./vault/data ./vault/logs ./vault/policies ./vault/token ./vault/unseal
 	sudo rm -rf ./CA/vault/data ./CA/vault/logs ./CA/vault/policies ./CA/vault/token ./CA/vault/unseal
 	rm -rf certs
+
+test-tls:
+	./test/qkms-test-tls.sh
