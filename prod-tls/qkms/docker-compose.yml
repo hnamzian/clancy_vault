@@ -84,7 +84,7 @@ services:
       - migration
     command: run
     volumes:
-      - ${HOST_MANIFEST_PATH-./manifests/prod}:/manifests:ro
+      - ${HOST_MANIFEST_PATH-./manifests}:/manifests:ro
       - ../vault/token/qkm_token:/vault/token/.root
       - ../certs/qkms:/tls
 
@@ -95,4 +95,4 @@ volumes:
 networks:
   hashicorp:
     external:
-      name: clancy_vault
+      name: prod-tls_vault
