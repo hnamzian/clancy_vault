@@ -1,29 +1,32 @@
-dev:
-	@docker-compose -f docker-compose.dev.yml up -d
+dev-up:
+	@docker-compose -f ./dev/docker-compose.yml up -d
 	@sleep 10
-	@./scripts/vault-init.sh
-	@docker-compose -f qkms/docker-compose.dev.yml up -d
+	@./dev/vault/scripts/vault-init.sh
+	@docker-compose -f ./dev/qkms/docker-compose.yml up -d
 
-prod:
+dev-test:
+	@./dev/test/qkms-test.sh
+
+dev-down:
+	@docker-compose -f ./dev/qkms/docker-compose.yml down -v --timeout 0
+	@docker-compose -f ./dev/docker-compose.yml down -v --timeout 0
+	sudo rm -rf ./dev/vault/data ./dev/vault/logs ./dev/vault/policies ./dev/vault/token ./dev/vault/unseal
+
+
+prod-tls:
 	@make ca
-	@docker-compose -f docker-compose.prod.yml up -d
+	@docker-compose -f ./prod-tls/docker-compose.yml up -d
 	@sleep 10
-	@./scripts/vault-init-tls.sh
-	@docker-compose -f qkms/docker-compose.prod.yml up -d
+	@./prod-tls/vault/scripts/vault-init-tls.sh
+	@docker-compose -f ./prod-tls/qkms/docker-compose.yml up -d
 	
-ca:
-	@docker-compose -f ./CA/docker-compose.yml up -d
-	@sleep 10
-	@./CA/vault/scripts/unseal.sh
-	@./CA/vault/scripts/init_ca.sh
-
-down:
-	@docker-compose -f qkms/docker-compose.dev.yml down -v --timeout 0
-	@docker-compose -f docker-compose.dev.yml down -v --timeout 0
-	@docker-compose -f ./CA/docker-compose.yml down -v --timeout 0
-	sudo rm -rf ./vault/data ./vault/logs ./vault/policies ./vault/token ./vault/unseal
-	sudo rm -rf ./CA/vault/data ./CA/vault/logs ./CA/vault/policies ./CA/vault/token ./CA/vault/unseal
-	sudo rm -rf certs
-
-test-tls:
+prod-tls-test:
 	./test/qkms-test-tls.sh
+
+prod-tls-down:
+	@docker-compose -f ./prod-tls/CA/docker-compose.yml down -v --timeout 0
+	@docker-compose -f ./prod-tls/docker-compose.yml down -v --timeout 0
+	@docker-compose -f ./prod-tls/qkms/docker-compose.yml down -v --timeout 0
+	sudo rm -rf ./prod-tls/vault/data ./prod-tls/vault/logs ./prod-tls/vault/policies ./prod-tls/vault/token ./prod-tls/vault/unseal
+	sudo rm -rf ./prod-tls/CA/vault/data ./prod-tls/CA/vault/logs ./prod-tls/CA/vault/policies ./prod-tls/CA/vault/token ./prod-tls/CA/vault/unseal
+	sudo rm -rf ./prod-tls/certs
