@@ -79,7 +79,7 @@ services:
       - migration
     command: run
     volumes:
-      - ${HOST_MANIFEST_PATH-./manifests/dev}:/manifests:ro
+      - ${HOST_MANIFEST_PATH-./manifests}:/manifests:ro
       - ./config/apikey:/apikey:ro
       - ../vault/token/qkm_token:/vault/token/.root
 
@@ -90,4 +90,4 @@ volumes:
 networks:
   hashicorp:
     external:
-      name: clancy_vault
+      name: dev_vault
