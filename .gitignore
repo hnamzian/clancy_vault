@@ -1,18 +1,26 @@
-vault/data
-vault/logs
-vault/policies
-vault/token
-vault/unseal
+/dev/vault/data
+/dev/vault/logs
+/dev/vault/policies
+/dev/vault/token
+/dev/vault/unseal
 
-qkms/config/apikey
+/dev/qkms/config/apikey
 
-CA/certs
-CA/vault/data
-CA/vault/logs
-CA/vault/policies
-CA/vault/token
-CA/vault/unseal
+/dev/test/.env
 
-/certs
+/prod-tls/vault/data
+/prod-tls/vault/logs
+/prod-tls/vault/policies
+/prod-tls/vault/token
+/prod-tls/vault/unseal
 
-.env
+/prod-tls/CA/certs
+/prod-tls/CA/vault/data
+/prod-tls/CA/vault/logs
+/prod-tls/CA/vault/policies
+/prod-tls/CA/vault/token
+/prod-tls/CA/vault/unseal
+
+/prod-tls/certs
+
+/prod-tls/test/.env
