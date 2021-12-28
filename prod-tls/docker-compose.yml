@@ -36,8 +36,7 @@ services:
       - ./vault/logs:/vault/logs
       - ./certs/vault:/vault/tls:ro
       - ./certs/vault_client:/vault/client/tls
-      - ./vault/plugins/quorum-hashicorp-vault-plugin:/vault/plugins/quorum-hashicorp-vault-plugin
-      - ./scripts/vault-init.sh:/vault/vault-init.sh
+      - ../vault-plugins/quorum-hashicorp-vault-plugin:/vault/plugins/quorum-hashicorp-vault-plugin
     environment:
       ROOT_TOKEN_PATH: /vault/.root
       VAULT_ADDR: https://vault:8200
