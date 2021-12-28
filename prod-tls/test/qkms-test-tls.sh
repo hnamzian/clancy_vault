@@ -1,7 +1,7 @@
-ENV_DIR=./test/.env
-QKMS_CA_CERT=./certs/qkms_client/ca.crt
-QKMS_CLIENT_CERT=./certs/qkms_client/tls.crt
-QKMS_CLIENT_KEY=./certs/qkms_client/tls.key
+ENV_DIR=./prod-tls/test/.env
+QKMS_CA_CERT=./prod-tls/certs/qkms_client/ca.crt
+QKMS_CLIENT_CERT=./prod-tls/certs/qkms_client/tls.crt
+QKMS_CLIENT_KEY=./prod-tls/certs/qkms_client/tls.key
 
 load_dotenv() {
   if [ -f $ENV_DIR ]; then
