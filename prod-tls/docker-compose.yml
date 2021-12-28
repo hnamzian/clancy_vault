@@ -11,7 +11,7 @@ services:
     image: consul:1.10.4
     container_name: consul
     volumes:
-      - ./consul/config/consul-prod.json:/consul/config/consul.json:ro
+      - ./consul/config/consul.json:/consul/config/consul.json:ro
       - ./certs/consul:/consul/tls
     ports:
       - 8500:8500
@@ -30,7 +30,7 @@ services:
     # cap_add:
     #   - IPC_LOCK
     volumes:
-      - ./vault/config/vault-prod.json:/vault/config/vault.json
+      - ./vault/config/vault.json:/vault/config/vault.json
       - ./vault/policies:/vault/policies
       - ./vault/data:/vault/data
       - ./vault/logs:/vault/logs
