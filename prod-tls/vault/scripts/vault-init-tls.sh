@@ -1,16 +1,15 @@
-VAULT_CA_CERT="./certs/vault_client/ca.crt"
-VAULT_CLIENT_CERT="./certs/vault_client/tls.crt"
-VAULT_CLIENT_KEY="./certs/vault_client/tls.key"
+VAULT_CA_CERT="./prod-tls/certs/vault_client/ca.crt"
+VAULT_CLIENT_CERT="./prod-tls/certs/vault_client/tls.crt"
+VAULT_CLIENT_KEY="./prod-tls/certs/vault_client/tls.key"
 VAULT_ADDR=${VAULT_ADDR-https://localhost:8200}
-PLUGIN_PATH=${PLUGIN_PATH-/vault/plugins}
 PLUGIN_MOUNT_PATH=${PLUGIN_MOUNT_PATH-quorum}
-VAULT_TOKEN_PATH=${VAULT_TOKEN_PATH-./vault/token}
+VAULT_TOKEN_PATH=${VAULT_TOKEN_PATH-./prod-tls/vault/token}
 VAULT_TOKEN_FILE_NAME=${VAULT_TOKEN_FILE_NAME-root}
-UNSEAL_KEYS_PATH=${UNSEAL_KEYS_PATH-./vault/unseal}
+UNSEAL_KEYS_PATH=${UNSEAL_KEYS_PATH-./prod-tls/vault/unseal}
 UNSEAL_KEYS_FILE_NAME=${UNSEAL_KEYS_FILE_NAME-unseal_keys}
-QKM_TOKEN_PATH=${QKM_TOKEN_PATH-./vault/token}
+QKM_TOKEN_PATH=${QKM_TOKEN_PATH-./prod-tls/vault/token}
 QKM_TOKEN_FILE_NAME=${QKM_TOKEN_FILE_NAME-qkm_token}
-PLUGIN_FILE=./vault/plugins/quorum-hashicorp-vault-plugin
+PLUGIN_FILE=./vault-plugins/quorum-hashicorp-vault-plugin
 
 echo "[PLUGIN] Initializing Vault: ${VAULT_ADDR}"
 init_vault() {
@@ -72,12 +71,6 @@ enable_kv2_key_engine() {
 }
 
 register_plugin() {
-  if [ "${PLUGIN_PATH}" != "/vault/plugins" ]; then
-    mkdir -p ${PLUGIN_PATH}
-    echo "[PLUGIN] Copying plugin to expected folder"
-    cp $PLUGIN_FILE "${PLUGIN_PATH}/quorum-hashicorp-vault-plugin"
-  fi
-
   echo "[PLUGIN] Registering Quorum Hashicorp Vault plugin..."
   SHA256SUM=$(sha256sum -b ${PLUGIN_FILE} | cut -d' ' -f1)
 
