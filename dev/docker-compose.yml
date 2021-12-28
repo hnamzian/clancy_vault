@@ -1,0 +1,58 @@
+version: "3.7"
+
+x-container-common: &container-common
+  restart: "on-failure"
+  networks:
+    - vault
+
+services:
+  consul:
+    <<: *container-common
+    image: consul:1.10.4
+    container_name: consul
+    volumes:
+      - ./consul/config/consul.json:/consul/config/consul.json:ro
+    ports:
+      - 8500:8500
+    command: 'agent -config-file=/consul/config/consul.json'
+
+  vault:
+    <<: *container-common
+    image: vault:1.8.4
+    container_name: vault
+    tty: true
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - ./vault/config/vault.json:/vault/config/vault.json
+      - ./vault/policies:/vault/policies
+      - ./vault/data:/vault/data
+      - ./vault/logs:/vault/logs
+      - ../vault-plugins/quorum-hashicorp-vault-plugin:/vault/plugins/quorum-hashicorp-vault-plugin
+    environment:
+      ROOT_TOKEN_PATH: /vault/.root
+      VAULT_ADDR: http://vault:8200
+      PLUGIN_MOUNT_PATH: quorum
+    entrypoint:
+      - sh
+      - -c
+      - |
+        # apk add jq
+        # apk add --no-cache curl
+        # chmod +x /vault/vault-init.sh
+        # ( sleep 10 ; /vault/vault-init.sh ) &
+        vault server -config=/vault/config/vault.json
+    ports:
+      - 8200:8200
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "--proxy", "off", "http://localhost:8200/v1/sys/health?standbyok=true" ]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    depends_on:
+      - consul
+
+networks:
+  vault:
+    driver: bridge

@@ -1,0 +1,19 @@
+{
+  "storage": {
+    "file": {
+      "path": "/vault/data"
+    }
+  },
+  "listener": {
+    "tcp":{
+      "address": "0.0.0.0:8200",
+      "tls_disable": true
+    }
+  },
+  "default_lease_ttl": "15m",
+  "max_lease_ttl": "30m",
+  "api_addr": "http://vault_ca:8200",
+  "plugin_directory": "/vault/plugins",
+  "log_level": "Debug",
+  "ui": true
+}

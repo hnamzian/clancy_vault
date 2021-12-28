@@ -90,4 +90,4 @@ volumes:
 networks:
   hashicorp:
     external:
-      name: clancy_vault
+      name: dev_vault

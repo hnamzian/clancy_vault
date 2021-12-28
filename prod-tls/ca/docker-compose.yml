@@ -1,0 +1,34 @@
+version: "3.7"
+
+x-container-common: &container-common
+  restart: "on-failure"
+  networks:
+    - vault
+
+services:
+  vault_ca:
+    <<: *container-common
+    image: vault:1.8.4
+    container_name: vault_ca
+    tty: true
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - ./vault/config/vault.json:/vault/config/vault.json
+      - ./vault/policies:/vault/policies
+      - ./vault/data:/vault/data
+      - ./vault/logs:/vault/logs
+    environment:
+      ROOT_TOKEN_PATH: /vault/.root
+      VAULT_ADDR: http://vault_ca:8200
+    entrypoint:
+      - sh
+      - -c
+      - |
+        vault server -config=/vault/config/vault.json
+    ports:
+      - 7200:8200
+
+networks:
+  vault:
+    driver: bridge
