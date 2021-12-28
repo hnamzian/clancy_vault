@@ -14,12 +14,12 @@
 /prod-tls/vault/token
 /prod-tls/vault/unseal
 
-/prod-tls/CA/certs
-/prod-tls/CA/vault/data
-/prod-tls/CA/vault/logs
-/prod-tls/CA/vault/policies
-/prod-tls/CA/vault/token
-/prod-tls/CA/vault/unseal
+/prod-tls/ca/certs
+/prod-tls/ca/vault/data
+/prod-tls/ca/vault/logs
+/prod-tls/ca/vault/policies
+/prod-tls/ca/vault/token
+/prod-tls/ca/vault/unseal
 
 /prod-tls/certs
 
